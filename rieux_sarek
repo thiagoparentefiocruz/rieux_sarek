@@ -6,7 +6,7 @@ set -euo pipefail
 
 # === CAMINHOS DOS MÓDULOS INTERNOS ===
 # Ajuste este caminho para a pasta exata onde você salvará os 4 scripts abaixo
-MODULES_DIR="/home/thiago.parente/proj.thiago.parente/scripts_modelos"
+MODULES_DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"
 SCRIPT_SAMPLESHEET="${MODULES_DIR}/modelo_nfcore_sarek_001_samplesheet_builder.sh"
 SCRIPT_RUN="${MODULES_DIR}/modelo_nfcore_sarek_002_run.sh"
 SCRIPT_DEPTH="${MODULES_DIR}/modelo_nfcore_sarek_003_depth_consolidator.sh"
