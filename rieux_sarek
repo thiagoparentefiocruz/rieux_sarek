@@ -1,0 +1,119 @@
+#!/bin/bash
+# ==============================================================================
+# rieux_sarek - Wrapper CLI para nf-core/sarek otimizado para o cluster Rieux
+# ==============================================================================
+set -euo pipefail
+
+# === CAMINHOS DOS MÓDULOS INTERNOS ===
+# Ajuste este caminho para a pasta exata onde você salvará os 4 scripts abaixo
+MODULES_DIR="/home/thiago.parente/proj.thiago.parente/scripts_modelos"
+SCRIPT_SAMPLESHEET="${MODULES_DIR}/modelo_nfcore_sarek_001_samplesheet_builder.sh"
+SCRIPT_RUN="${MODULES_DIR}/modelo_nfcore_sarek_002_run.sh"
+SCRIPT_DEPTH="${MODULES_DIR}/modelo_nfcore_sarek_003_depth_consolidator.sh"
+SCRIPT_VCF="${MODULES_DIR}/modelo_nfcore_sarek_004_vcf_synthesis.sh"
+
+# === VARIÁVEIS GLOBAIS (Genomas, VEP, Sarek e Bancos do Brasil) ===
+export PIPELINE="/opt/share/nf-core-pipelines/nf-core-sarek/3_8_1"
+export GENOME_FASTA="/opt/share/databases/genomes/iGenomes/Homo_sapiens/GATK/GRCh38/Sequence/WholeGenomeFasta/Homo_sapiens_assembly38.fasta"
+export GENOME_DICT="/opt/share/databases/genomes/iGenomes/Homo_sapiens/GATK/GRCh38/Sequence/WholeGenomeFasta/Homo_sapiens_assembly38.dict"
+export BWAMEM_INDEX_DIR="/opt/share/databases/genomes/iGenomes/Homo_sapiens/GATK/GRCh38/Sequence/BWAIndex"
+export KNOWN_DBSNP="/opt/share/databases/dbsnp/dbsnp_146.hg38.vcf.gz"
+export VEP_CACHE_DIR="/opt/share/databases/VEP"
+export VEP_CACHE_VERSION="112"
+export SINGULARITY_LIBRARY="/opt/share/nf-core-pipelines/singularity_dir"
+# O nosso valioso banco ABraOM centralizado aqui:
+export ABRAOM_DB="/home/thiago.parente/data.thiago.parente/SABE1171.Abraom.sorted.tsv.gz"
+
+mostrar_ajuda() {
+    cat << EOF
+OSR (Orquestra Sinfônica Rieux) - Sarek CLI
+
+Uso: rieux_sarek <comando> [opções]
+
+Comandos:
+  samplesheet   Gera o CSV (XX, Status 0) a partir dos FASTQs.
+  run           Orquestra o Sarek no Rieux (Verifica screen, monta logs/links).
+  report        Gera tabelas finais (variants ou depth).
+
+Exemplos:
+  rieux_sarek samplesheet --fastq-dir fastq_originais/ --outdir sarek_run_input_files/
+  rieux_sarek run --mode panel --samplesheet sarek_run_input_files/amostras.csv --bed_file meu_painel.bed --outdir sarek_run/
+  rieux_sarek report --type variants --outdir sarek_run/run_v381_2026...
+EOF
+    exit 0
+}
+
+if [[ $# -eq 0 ]]; then mostrar_ajuda; fi
+COMANDO=$1; shift
+
+case "$COMANDO" in
+    samplesheet)
+        bash "$SCRIPT_SAMPLESHEET" "$@" ;;
+    run)
+        bash "$SCRIPT_RUN" "$@" ;;
+    report)
+        TYPE=""; OUTDIR=""; BED=""
+        while [[ $# -gt 0 ]]; do
+            case $1 in
+                --type) TYPE="$2"; shift 2 ;;
+                --outdir) OUTDIR="$2"; shift 2 ;;
+                --bed_file) BED="$2"; shift 2 ;;
+                *) echo "Erro: Opção desconhecida: $1"; exit 1 ;;
+            esac
+        done
+        if [[ -z "$OUTDIR" || -z "$TYPE" ]]; then echo "Erro: --type e --outdir são obrigatórios."; exit 1; fi
+        
+        if [[ "$TYPE" == "variants" ]]; then
+            echo "[rieux_sarek] Submetendo síntese de variantes para a fila SLURM (CPU)..."
+            
+            JOB_NAME="VCF_$(basename "$OUTDIR")"
+            sbatch <<EOF
+#!/bin/bash
+#SBATCH --job-name=${JOB_NAME}
+#SBATCH --partition=cpu
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=4G
+#SBATCH --time=01:00:00
+#SBATCH --output=${OUTDIR}/logs/vcf_report_%j.log
+#SBATCH --error=${OUTDIR}/logs/vcf_report_%j.err
+
+echo "Iniciando síntese de variantes no SLURM..."
+date
+bash "$SCRIPT_VCF" "$OUTDIR" "$ABRAOM_DB"
+echo "Finalizado!"
+date
+EOF
+
+        elif [[ "$TYPE" == "depth" ]]; then
+            if [[ -z "$BED" ]]; then echo "Erro: Relatório de cobertura exige --bed_file."; exit 1; fi
+            
+            echo "[rieux_sarek] Submetendo cálculo de cobertura para a fila SLURM (CPU)..."
+            
+            JOB_NAME="Depth_$(basename "$OUTDIR")"
+            sbatch <<EOF
+#!/bin/bash
+#SBATCH --job-name=${JOB_NAME}
+#SBATCH --partition=cpu
+#SBATCH --nodes=1
+#SBATCH --ntasks=1
+#SBATCH --cpus-per-task=2
+#SBATCH --mem=4G
+#SBATCH --time=01:00:00
+#SBATCH --output=${OUTDIR}/logs/depth_report_%j.log
+#SBATCH --error=${OUTDIR}/logs/depth_report_%j.err
+
+echo "Iniciando consolidação de cobertura Mosdepth no SLURM..."
+date
+bash "$SCRIPT_DEPTH" "$OUTDIR" "$BED"
+echo "Finalizado!"
+date
+EOF
+        else
+            echo "Erro: Tipo inválido. Use 'variants' ou 'depth'."
+            exit 1
+        fi
+        ;;
+    *) mostrar_ajuda ;;
+esac
