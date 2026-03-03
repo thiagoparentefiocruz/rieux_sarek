@@ -1,4 +1,4 @@
-# OSR (Orquestra Sinfônica Rieux) - Sarek CLI Wrapper
+# Sarek @ Rieux CLI Wrapper
 
 A custom command-line interface (CLI) wrapper designed to orchestrate the [nf-core/sarek](https://nf-co.re/sarek) (v3.8.1) variant calling pipeline specifically for the Rieux High-Performance Computing (HPC) cluster. 
 
