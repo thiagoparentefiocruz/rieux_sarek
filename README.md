@@ -1,6 +1,6 @@
 # Sarek @ Rieux CLI Wrapper
 
-https://doi.org/10.5281/zenodo.18852917
+[![DOI](https://zenodo.org/badge/DOI/10.5281/zenodo.SEU_NUMERO_AQUI.svg)](https://doi.org/10.5281/zenodo.18852917)
 
 A custom command-line interface (CLI) wrapper designed to orchestrate the [nf-core/sarek](https://nf-co.re/sarek) (v3.8.1) variant calling pipeline specifically for the Rieux High-Performance Computing (HPC) cluster. 
 
