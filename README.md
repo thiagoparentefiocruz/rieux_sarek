@@ -13,6 +13,21 @@ This tool automates samplesheet generation, SLURM job submission, bypasses stand
 * **Clinical Variant Synthesis**: Automatically annotates VEP outputs with the Brazilian ABraOM database and filters variants based on clinical relevance (VAF, DP, consequence, and MAF < 1%).
 * **Depth Consolidation**: Generates actionable target-region coverage reports using Mosdepth and user-provided BED files.
 
+## Install
+A. Baixar a ferramenta do GitHub:
+```bash
+git clone https://github.com/thiagoparentefiocruz/rieux_sarek.git ~/rieux_sarek
+```
+B. Dar permissão de execução:
+```bash
+chmod 700 ~/rieux_sarek/*
+```
+C. Adicionar ao seu PATH:
+```bash
+echo 'export PATH="$HOME/rieux_sarek:$PATH"' >> ~/.bashrc
+source ~/.bashrc
+```
+
 ## 🛠️ Usage
 
 The wrapper operates through three main modules:
