@@ -1,5 +1,7 @@
 # Sarek @ Rieux CLI Wrapper
 
+https://doi.org/10.5281/zenodo.18852917
+
 A custom command-line interface (CLI) wrapper designed to orchestrate the [nf-core/sarek](https://nf-co.re/sarek) (v3.8.1) variant calling pipeline specifically for the Rieux High-Performance Computing (HPC) cluster. 
 
 This tool automates samplesheet generation, SLURM job submission, bypasses standard whole-genome filters for targeted gene panels, and synthesizes clinical variant tables using local population databases (ABraOM).
@@ -37,4 +39,4 @@ rieux_sarek report --type variants --outdir /path/to/sarek_run/run_ID
 rieux_sarek report --type depth --bed_file /path/to/inputs/target_panel.bed --outdir /path/to/sarek_run/run_ID
 ```
 📄 Citation
-If you use this wrapper in your research, please cite the upcoming paper (DOI: to be added) and the original nf-core/sarek publication.
+If you use this wrapper in your research, please cite the upcoming paper (DOI: 10.5281/zenodo.18852917) and the original nf-core/sarek publication.
